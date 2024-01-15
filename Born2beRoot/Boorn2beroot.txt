@@ -1,4 +1,4 @@
------------------boorn2beroot--------------
+-----------------Born2beRoot--------------
 apt install sudo
 Lsblk 
 
