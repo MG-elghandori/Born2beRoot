@@ -1,0 +1,176 @@
+-----------------boorn2beroot--------------
+apt install sudo
+Lsblk 
+
+Sudo apt install ssh 
+Sudo ssh status | sudo service ssh status 
+Sudo ssh enable | start  --or sudo systemctl enable ssh 
+
+
+Sudo apt install ufw 
+Sudo ufw status | sudo service uff status 
+Sudo ufw enable | start --or sudo systemctl enable ufw 
+
++add port 
+Sudo ufw allow 4242 
+
++delete port 
+Sudo ufw delete 3 
+
++Stop port 
+Sudo ufw deny 4040
+
+-and config port and root permission :
+
+Nano/etc/ssh/sshd_config 
+    (Prot 4242 & permitRootLogin no)
+
+-and change config for (bridge adapte)
+
++Connect : ssh moel-gha@10.12.132.232 -p4242 
+
++Show number user connect : (users | wc -w 
+
+
++config password policy : 
+-sudo apt install libpam-pwquality 
+
+-sudo nano etc/securty/pwquality.conf 
+(
+Difok = 7 
+Minlen = 10
+ucredit=-1 
+dcredit = -1 
+lcredit=-1
+Max repeat =3 
+Usercheck =1
+Enforcing =1 
+Retry =3 
+enforce_for_root 
+)
+
+-sudo nano /etc/login.defs 
+(
+pass_maxDays 30
+pass_minDays 2
+pass_warn-age 7
+
++And show with this command : Change -l usename
++Change with commands :
+Change -m 2 usename 
+Change -M 30 usename 
+)
+
++config group sudo :
+  -Create group name user42:(sudo Addgroup user42) 
+  -Add your name user in this group :(sudousermod -aG user42 loginname)
+  -add this user in group sudo :(sudousermod -aG sudo loginname)
++config sudo group :
+Defaults        env_reset
+Defaults        mail_badpass
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Defaults        badpass_message="wrog password"
+Defaults        logfile="/var/log/sudo/sudo.log"
+Defaults        iolog_dir="/var/log/sudo"
+Defaults        passwd_tries=3
+Defaults        log_output
+Defaults        log_input
+Defaults        requiretty
+
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL 
+
++for watch input and output : 
+-output : 
+Var/log/sudo
+cd 00/00 zcat tryout 
+
+Inputs : 
+Var/log/sudo
+Cat sudo.log
+
++script password policy :
+
+sudo apt-get install net-tools
+sudo apt-get install sysstat
+
+#!/bin/bash
+ARCH=$(uname -a)
+CPU_PHYS=$(lscpu | grep "Socket(s):" | awk '{print $2}')
+CPU_VIRT=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
+MEM_USE=$(free -m | awk 'NR==2{printf "%s/%sMB (%.2f%%)",$3,$2,($3/$2)*100}')
+DISK_USED=$(df -Bm | grep "^/dev" | grep -v "/dev/sda1" | awk '{sum+=$3} END {printf "%d", sum}')
+DISK_SIZE=$(df -h | grep "^/dev" | grep -v "/dev/sda1" | awk '{sum+=$2} END {printf "%dGb", sum}')
+DISK_PERCENT=$(awk -v used=$DISK_USED -v size=$DISK_SIZE 'BEGIN{printf "%.2f%%", (used/(size*1024))*100}')
+CPU_LOAD=$(mpstat | awk 'NR==4{printf "%.2f%%", 100-$NF}')
+LAST_BOOT=$(who -b | awk '{print $3, $4}')
+LVM_USE=$(lsblk | grep -q "lvm" && echo "yes" || echo "no");
+TCP_CON=$(netstat | grep "ESTABLISHED" | wc -l)
+USER_LOG=$(users | wc -w)
+IP=$(hostname -I)
+MAC=$(ip link | awk '/ether/ {print $2}')
+SUDO_CMD=$(sudo journalctl _COMM=sudo | grep "COMMAND" | wc -l)
+//SUDO_CMD=$(grep -c "COMMAND" /var/log/sudo/sudo.log)
+
+wall "
+#Architecture: $ARCH
+#CPU physical : $CPU_PHYS
+#vCPU : $CPU_VIRT
+#Memory Usage :$MEM_USE
+#Disk Usage :$DISK_USED/$DISK_SIZE ($DISK_PERCENT)
+#CPU load: $CPU_LOAD
+#Last boot: $LAST_BOOT
+#LVM use: $LVM_USE
+#Connexions TCP : $TCP_CON ESTABLISHED
+#User log: $USER_LOG
+#Network: IP $IP ($MAC)
+#Sudo : $SUDO_CMD cmd
+"
+
+And use sudo chmod +x monitoring.sh  and ./monitoring
+
+And use :
+	sudo crontab -e
+And :
+# m h  dom mon dow   command
+@reboot  bash /home/monitoring.sh
+*/10 * * * *    bash /home/monitoring.sh
+//for stop : sudo systemctl stop cron 
+
+
+++++++++++++++++++++++Bonus:
+
+Sudo apt install lighttpd 
+sudo ufw allow 80
+Sudo apt install mariadb-server
+Sudo mysql_secure_installation (n,n,y,y,y,y)
+sudo mariadb
+CREATE DATABASE bonus;
+GRANT ALL PRIVILEGES ON bonus.* TO 'moel-gha'@'localhost' IDENTIFIED BY 'Qwerty1357' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+exit
+Mariadb -u usr -p 
+Sudo apt install php-cgi php-mysql
+Sudo apt install wget 
+sudo wget http://wordpress.org/latest.zip -P /var/www/html
+sudo unzip /var/www/html/latest.tar.gz
+sudo rm /var/www/html/latest.tar.gz
+sudo cp -r /var/www/html/wordpress/* /var/www/html
+sudo rm -rf /var/www/html/wordpress
+sudo cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+sudo nano /var/www/html/wp.config.php
+define('DB_Name','bonus');
+define('DB_user','user');
+define('DB_Password','qqq');
+define('DB_Host','localhost');
+sudo lighty-enable-mod fastcgi-php
+sudo service lighttpd force-reload
+
+:siteweb (ip a)
+http://10.12.174.166/wp-admin/install.php
+
+
+
+  
